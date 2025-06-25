@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 
-const Control = () => {
-  const [betAmount, setBetAmount] = useState(100);
-  const [loading, setLoading] = useState(false);
-  const [color, setColor] = useState("");
+const Control = ({
+  color,
+  betAmount,
+  setBetAmount,
+  setColor,
+  loading,
+  setLoading,
+}) => {
+  const [width, setWidth] = useState(0);
+  const requestRef = useRef();
+  const startTimeRef = useRef();
+
   const handleToggleColor = (inputColor) => {
     if (color === inputColor) {
       setColor("");
@@ -33,12 +41,11 @@ const Control = () => {
     }
   };
 
-  const [width, setWidth] = useState(0);
-  const requestRef = useRef();
-  const startTimeRef = useRef();
-
   useEffect(() => {
     if (!loading) {
+      startTimeRef.current = null;
+      requestRef.current = null;
+
       const duration = 10000; // 10 seconds
 
       const animate = (timestamp) => {
@@ -67,9 +74,10 @@ const Control = () => {
 
   useEffect(() => {
     setInterval(() => {
+      setWidth(0);
       setLoading((prev) => !prev);
     }, 10000);
-  }, [loading]);
+  }, []);
 
   return (
     <div className="control lg:!pt-[300px]">

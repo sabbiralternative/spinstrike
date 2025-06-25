@@ -2,17 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import "./Home.css";
 import "./Font.css";
 import Navbar from "./Navbar";
-import { useOrderMutation } from "../../redux/features/events/events";
-import { useSound } from "../../context/ApiProvider";
+// import { useOrderMutation } from "../../redux/features/events/events";
+// import { useSound } from "../../context/ApiProvider";
 import Control from "./Control";
 import UserHistory from "./UserHistory";
 import History from "./History";
 
 const Home = () => {
-  const { sound } = useSound();
+  const [betAmount, setBetAmount] = useState(100);
+  const [loading, setLoading] = useState(false);
+  const [color, setColor] = useState("");
+  // const { sound } = useSound();
   const [isDesktop, setIsDesktop] = useState(false);
   const [deviceWidth, setDeviceWidth] = useState(window.innerWidth);
-  const [addOrder] = useOrderMutation();
+  // const [addOrder] = useOrderMutation();
+  const [move, setMove] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -38,30 +42,59 @@ const Home = () => {
   const [angle, setAngle] = useState(0);
   const [isSpinning, setIsSpinning] = useState(true);
   const requestRef = useRef();
+  const intervalRef = useRef(null);
 
   useEffect(() => {
-    // Random stop time between 5 and 10 seconds (in ms)
-    const stopAfter = Math.random() * 5000 + 5000;
+    if (loading && isSpinning) {
+      intervalRef.current = setInterval(() => {
+        setMove((prev) => !prev);
+      }, 100);
+    } else {
+      // Stop toggling
+      setMove(false);
+      // Clear the interval
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
 
-    const startTime = performance.now();
-
-    const animate = (now) => {
-      const elapsed = now - startTime;
-
-      if (elapsed >= stopAfter) {
-        setIsSpinning(false);
-        return;
-      }
-
-      setAngle((prev) => prev + 5); // adjust spin speed here
-      requestRef.current = requestAnimationFrame(animate);
+    // Cleanup on unmount or when loading changes
+    return () => {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     };
+  }, [loading, isSpinning]);
 
-    requestRef.current = requestAnimationFrame(animate);
+  useEffect(() => {
+    if (loading) {
+      // Random stop time between 5 and 10 seconds (in ms)
+      const stopAfter = Math.random() * 5000 + 5000;
 
-    return () => cancelAnimationFrame(requestRef.current);
-  }, []);
+      const startTime = performance.now();
 
+      const animate = (now) => {
+        const elapsed = now - startTime;
+
+        if (elapsed >= stopAfter) {
+          setIsSpinning(false);
+          return;
+        }
+
+        setAngle((prev) => prev + 5); // adjust spin speed here
+
+        requestRef.current = requestAnimationFrame(animate);
+      };
+
+      requestRef.current = requestAnimationFrame(animate);
+
+      return () => cancelAnimationFrame(requestRef.current);
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    if (loading) {
+      setIsSpinning(true);
+    }
+  }, [loading]);
   return (
     <div
       id="app"
@@ -75,7 +108,7 @@ const Home = () => {
         <div className="inner" style={{ width: `${deviceWidth}px` }}>
           <History />
           <div className="game">
-            <div className="game__current _move" />
+            <div className={`game__current  ${move ? "_move2" : "_move"}`} />
             <div className="game__inner">
               <div className="game__brum">
                 <div
@@ -89,7 +122,14 @@ const Home = () => {
             </div>
           </div>
           <UserHistory />
-          <Control />
+          <Control
+            betAmount={betAmount}
+            color={color}
+            loading={loading}
+            setBetAmount={setBetAmount}
+            setColor={setColor}
+            setLoading={setLoading}
+          />
         </div>
       </div>
     </div>
