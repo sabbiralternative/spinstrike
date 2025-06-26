@@ -212,7 +212,7 @@ const Control = ({
           </div>
         </div>
       </div>
-      <div className="button__wrap lg:mt-[20px]">
+      <div className="button__wrap ">
         <div className={`button__await ${loading ? "" : "_show"}`}>
           <div className="button__await-inner" style={{ width: `${width}%` }} />
         </div>
