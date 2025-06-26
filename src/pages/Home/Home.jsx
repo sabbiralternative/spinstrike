@@ -5,7 +5,7 @@ import Navbar from "./Navbar";
 // import { useOrderMutation } from "../../redux/features/events/events";
 // import { useSound } from "../../context/ApiProvider";
 import Control from "./Control";
-import UserHistory from "./UserHistory";
+// import UserHistory from "./UserHistory";
 import History from "./History";
 
 const Home = () => {
@@ -17,6 +17,10 @@ const Home = () => {
   const [deviceWidth, setDeviceWidth] = useState(window.innerWidth);
   // const [addOrder] = useOrderMutation();
   const [move, setMove] = useState(false);
+  const [angle, setAngle] = useState(0);
+  const [isSpinning, setIsSpinning] = useState(true);
+  const requestRef = useRef();
+  const currentSpeedRef = useRef(5);
 
   useEffect(() => {
     const handleResize = () => {
@@ -39,47 +43,48 @@ const Home = () => {
     };
   }, []);
 
-  const [angle, setAngle] = useState(0);
-  const [isSpinning, setIsSpinning] = useState(true);
-  const requestRef = useRef();
-  const intervalRef = useRef(null);
-
   useEffect(() => {
+    let timeoutId = null;
+
+    const runToggle = () => {
+      if (!loading || !isSpinning) return;
+
+      // Estimate speed-based delay: faster spin = faster toggle, slower spin = slower toggle
+      const speed = currentSpeedRef.current || 1;
+      const delay = 100 + (5 - speed) * 40;
+
+      setMove((prev) => !prev);
+
+      timeoutId = setTimeout(runToggle, delay);
+    };
+
     if (loading && isSpinning) {
-      intervalRef.current = setInterval(() => {
-        setMove((prev) => !prev);
-      }, 100);
-    } else {
-      // Stop toggling
-      setMove(false);
-      // Clear the interval
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+      runToggle();
     }
 
-    // Cleanup on unmount or when loading changes
     return () => {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+      clearTimeout(timeoutId);
     };
   }, [loading, isSpinning]);
 
   useEffect(() => {
     if (loading) {
-      // Random stop time between 5 and 10 seconds (in ms)
-      const stopAfter = Math.random() * 5000 + 5000;
-
+      const stopAfter = Math.random() * 5000 + 5000; // Between 5s and 10s
       const startTime = performance.now();
 
       const animate = (now) => {
         const elapsed = now - startTime;
+        const progress = elapsed / stopAfter;
 
-        if (elapsed >= stopAfter) {
+        if (progress >= 1) {
           setIsSpinning(false);
           return;
         }
 
-        setAngle((prev) => prev + 5); // adjust spin speed here
+        // Spin speed slows down as progress increases (ease-out)
+        const speed = 5 * (1 - progress); // Decrease from 5 to 0
+        currentSpeedRef.current = speed;
+        setAngle((prev) => prev + speed);
 
         requestRef.current = requestAnimationFrame(animate);
       };
@@ -95,6 +100,7 @@ const Home = () => {
       setIsSpinning(true);
     }
   }, [loading]);
+
   return (
     <div
       id="app"
@@ -121,7 +127,7 @@ const Home = () => {
               </div>
             </div>
           </div>
-          <UserHistory />
+          {/* <UserHistory /> */}
           <Control
             betAmount={betAmount}
             color={color}
