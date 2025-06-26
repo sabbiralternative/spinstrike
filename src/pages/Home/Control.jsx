@@ -52,13 +52,11 @@ const Control = ({
         if (!startTimeRef.current) startTimeRef.current = timestamp;
         const elapsed = timestamp - startTimeRef.current;
 
-        // progress: 0 to 1
+        // Linear progress from 0 to 1
         const progress = Math.min(elapsed / duration, 1);
 
-        // Custom easing/random-feeling effect
-        const noisyProgress = progress + Math.sin(progress * 50) * 0.02;
-
-        const currentWidth = Math.min(noisyProgress * 100, 100);
+        // No easing or wobble — pure linear motion
+        const currentWidth = progress * 100;
         setWidth(currentWidth);
 
         if (progress < 1) {
@@ -69,8 +67,10 @@ const Control = ({
       requestRef.current = requestAnimationFrame(animate);
 
       return () => cancelAnimationFrame(requestRef.current);
+    } else {
+      setColor("");
     }
-  }, [loading]);
+  }, [loading, setColor]);
 
   useEffect(() => {
     setInterval(() => {
@@ -204,11 +204,22 @@ const Control = ({
             </div>
           </div>
         ) : (
-          <div className="button _disabled">
-            <div className="button__inner">
-              <span style={{ fontSize: "10.8333px" }}>Choose color</span>
-            </div>
-          </div>
+          <>
+            {color ? (
+              <div className={`button _${color}`}>
+                <div className="button__pulse"></div>
+                <div className="button__inner">
+                  <span>Place bet</span>
+                </div>
+              </div>
+            ) : (
+              <div className="button _disabled">
+                <div className="button__inner">
+                  <span style={{ fontSize: "10.8333px" }}>Choose color</span>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
