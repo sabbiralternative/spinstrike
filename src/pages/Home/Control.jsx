@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useSound } from "../../context/ApiProvider";
+import { playSelectSound, playStakeSound } from "../../utils/sound";
 
 const Control = ({
   color,
@@ -7,12 +9,17 @@ const Control = ({
   setColor,
   loading,
   setLoading,
+  handlePlaceBet,
 }) => {
+  const { sound } = useSound();
   const [width, setWidth] = useState(0);
   const requestRef = useRef();
   const startTimeRef = useRef();
 
   const handleToggleColor = (inputColor) => {
+    if (sound) {
+      playSelectSound();
+    }
     if (color === inputColor) {
       setColor("");
     } else {
@@ -21,6 +28,7 @@ const Control = ({
   };
 
   const handleChangeBetAmount = (type) => {
+    selectStakeSound();
     if (type === "minus") {
       if (betAmount > 0 && betAmount <= 100) {
         setBetAmount((prev) => Math.max(prev - 10, 0));
@@ -38,6 +46,12 @@ const Control = ({
       } else if (betAmount >= 1000) {
         setBetAmount((prev) => prev + 500);
       }
+    }
+  };
+
+  const selectStakeSound = () => {
+    if (sound) {
+      playStakeSound();
     }
   };
 
@@ -80,7 +94,7 @@ const Control = ({
   }, []);
 
   return (
-    <div className="control lg:!pt-[300px]">
+    <div className="control lg:!pt-[0px]">
       {/* Bet amount section start */}
       <div className={`amount-portrait ${loading ? "_disabled" : ""}`}>
         <div className="amount-portrait__inner">
@@ -110,7 +124,10 @@ const Control = ({
             <div className="amount-btns__inner">
               <div
                 className="amount-btns__left"
-                onClick={() => setBetAmount(10)}
+                onClick={() => {
+                  setBetAmount(10);
+                  selectStakeSound();
+                }}
               >
                 min
               </div>
@@ -142,7 +159,10 @@ const Control = ({
               </div>
               <div
                 className="amount-btns__right"
-                onClick={() => setBetAmount(10000)}
+                onClick={() => {
+                  setBetAmount(10000);
+                  selectStakeSound();
+                }}
               >
                 max
               </div>
@@ -192,7 +212,7 @@ const Control = ({
           </div>
         </div>
       </div>
-      <div className="button__wrap">
+      <div className="button__wrap lg:mt-[20px]">
         <div className={`button__await ${loading ? "" : "_show"}`}>
           <div className="button__await-inner" style={{ width: `${width}%` }} />
         </div>
@@ -206,7 +226,7 @@ const Control = ({
         ) : (
           <>
             {color ? (
-              <div className={`button _${color}`}>
+              <div onClick={handlePlaceBet} className={`button _${color}`}>
                 <div className="button__pulse"></div>
                 <div className="button__inner">
                   <span>Place bet</span>

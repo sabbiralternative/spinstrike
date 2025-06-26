@@ -2,20 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import "./Home.css";
 import "./Font.css";
 import Navbar from "./Navbar";
-// import { useOrderMutation } from "../../redux/features/events/events";
-// import { useSound } from "../../context/ApiProvider";
+import { useOrderMutation } from "../../redux/features/events/events";
+import { useSound } from "../../context/ApiProvider";
 import Control from "./Control";
 // import UserHistory from "./UserHistory";
 import History from "./History";
+import { playBetSound } from "../../utils/sound";
+import { generateRoundId } from "../../utils/generateRoundId";
+import toast from "react-hot-toast";
 
 const Home = () => {
   const [betAmount, setBetAmount] = useState(100);
   const [loading, setLoading] = useState(false);
   const [color, setColor] = useState("");
-  // const { sound } = useSound();
+  const { sound } = useSound();
   const [isDesktop, setIsDesktop] = useState(false);
   const [deviceWidth, setDeviceWidth] = useState(window.innerWidth);
-  // const [addOrder] = useOrderMutation();
+  const [addOrder] = useOrderMutation();
   const [move, setMove] = useState(false);
   const [angle, setAngle] = useState(0);
   const [isSpinning, setIsSpinning] = useState(true);
@@ -101,6 +104,45 @@ const Home = () => {
     }
   }, [loading]);
 
+  const handlePlaceBet = async () => {
+    if (betAmount) {
+      if (sound) {
+        playBetSound();
+      }
+      const round_id = generateRoundId();
+      sessionStorage.removeItem("round_id");
+      sessionStorage.setItem("round_id", round_id);
+
+      const payload = [
+        {
+          eventId: 20005,
+          eventName: "Spin Strike",
+          isback: 0,
+          stake: betAmount,
+          type: "bet",
+          round_id,
+        },
+      ];
+
+      const res = await addOrder(payload).unwrap();
+      if (res?.success) {
+        setTimeout(() => {
+          let recentResult = [];
+          const recentStoredResult = localStorage.getItem("recentResult");
+          if (recentStoredResult) {
+            recentResult = JSON.parse(recentStoredResult);
+          }
+          //push
+          localStorage.setItem("recentResult", JSON.stringify(recentResult));
+        }, 500);
+      } else {
+        toast.error(res?.Message);
+      }
+    } else {
+      toast.error("Amount is required");
+    }
+  };
+
   return (
     <div
       id="app"
@@ -129,6 +171,7 @@ const Home = () => {
           </div>
           {/* <UserHistory /> */}
           <Control
+            handlePlaceBet={handlePlaceBet}
             betAmount={betAmount}
             color={color}
             loading={loading}
